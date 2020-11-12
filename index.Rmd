@@ -9,6 +9,7 @@ output:
 
 This is my PM566 Final Project website.
 
+
 ```{r setup, message=FALSE, echo=FALSE, warning=FALSE}
 library(data.table)
 library(tidyverse)
@@ -33,7 +34,7 @@ opts_chunk$set(
 source("process_COVID_data.R")
 ```
 
-```{r plot1, class.source="code-r-small"}
+```{r plot1, class.source="code-r-small", echo=FALSE}
 p1_scatter <- cv_states_today %>% 
   plot_ly(x = ~pop_density, y = ~deathsper100k,
           type = 'scatter', mode = 'markers', color = ~state,
@@ -60,7 +61,7 @@ p2_scatter <- cv_states_today_scatter %>%
          hovermode = "compare")
 ```
 
-## Showcasing plots {.tabset}
+## lab-12 {.tabset}
 
 ### Figure 1
 
@@ -74,4 +75,82 @@ p1_scatter
 p2_scatter
 ```
 
-{-}
+
+
+## Assignment-5 {.tabset}
+
+### Figure 1
+
+- Find which states have the total confirmed cases on Sep/28/2020 which are over 200,000.
+
+```{r message=FALSE, echo=FALSE, warning=FALSE, results='hide',fig.show='hide'}
+library(data.table)
+library(leaflet)
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+library(usmap)
+library(scales)
+library(RColorBrewer)
+# Read in data
+sdi <- data.table::fread("/Users/christina/Desktop/Social distancing index_ST.csv")
+totcases <- data.table::fread("/Users/christina/Desktop/us_state_confirmed_case.csv")
+# Delete the extra columns. I want to see the data of the same period in both data set. So I keep the period from Jan/21/2020 to Sep/28/2020.
+sdi1<- sdi[ ,-c(4:23)]
+sdi1<- sdi1[ ,-c(1)]
+totcases1<- totcases[ ,-c(265:272)]
+totcases1<- totcases1[ ,-c(3:12)]
+# Find which states have the total confirmed cases on Sep/28/2020 which are over 200,000.
+tot0928<-totcases1[ ,c(2,254)]
+tot0928a<-tot0928[`2020-09-28`>200000,]
+tot0928a$NAME<-reorder(tot0928a$NAME, -tot0928a$`2020-09-28`)
+p1 = ggplot(tot0928a,aes(x=NAME, y=`2020-09-28`, fill=NAME))+geom_bar(stat = 'identity')
+```
+
+```{r echo=FALSE}
+p1
+```
+
+### Figure 2
+
+- Compare the social distance index with the total confirmed cases in the states which are over 200,000.
+- From the following biaxial chart, in the 9 states with more than 200,000 confirmed infected people. If we set the social distance lager than 35 as the long social distance Here are 4 states follow patterns are shown: those with fewer infected people have a longer social distance, such as New York and New Jersey; the number of infected people is higher in states with shorter social distance, such as California, Florida and Texas.
+
+```{r echo=FALSE}
+# Compare the social distance index with the total confirmed cases in the states which are over 200,000.
+sdistate = sdi1[c(3,5,10,11,14,31,33,34,44),2]
+sdistate1 = sdi1[c(3,5,10,11,14,31,33,34,44),3:254]
+sdistatez = sdistate
+meandis = apply(sdistate1,1,mean)
+sdistatez$name = sdistate
+sdistatez$meandis = meandis
+total = tot0928a$`2020-09-28`
+sdistatez$total = total
+
+par(mar = c(5, 5, 3, 4)+0.1) 
+bar = barplot(sdistatez$total,ylab="total",
+col="orange",col.axis="orange",col.lab="orange")
+mtext(sdistatez$name,side=1,line=1,at=bar,cex=0.8,col="black")
+par(new=T)
+plot(bar,sdistatez$meandis,axes=F,xlab="",ylab=" ",col="red",type="o")
+axis(4,col="red",col.ticks="red",col.axis="red")
+```
+
+### Figure 3
+
+- Plot the mean values of social distance index of the 9 states on the map.
+- The states in grey color are those who have total confirmed cases lower than 200,000, which I did not calculate the mean values.
+- The states in blue color are those who have total confirmed cases over than 200,000, which I have calculated the mean values before. The dark blue indicates the higher mean of social distance index, the light blue indicates the lower mean of social distance index.
+
+```{r echo=FALSE}
+library(usmap)
+sdistatem = as.data.frame(sdistatez)
+names(sdistatem)[2] <- "state"
+p3 = plot_usmap('states', data =sdistatem, values ='meandis')+
+scale_fill_continuous(low = "light blue", high = "dark blue", guide = FALSE)
+```
+
+```{r echo=FALSE}
+p3
+```
